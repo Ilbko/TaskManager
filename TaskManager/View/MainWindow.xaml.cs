@@ -1,17 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using TaskManager.ViewModel;
 
 namespace TaskManager
 {
@@ -23,6 +13,19 @@ namespace TaskManager
         public MainWindow()
         {
             InitializeComponent();
+            this.DataContext = new TaskViewModel(ref this.TaskListView);
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (Button button in this.ButtonsDockPanel.Children)
+            {
+                button.Background = new SolidColorBrush(SystemColors.ControlColor);
+                button.BorderThickness = new Thickness(1);
+            }
+
+            (sender as Button).Background = new SolidColorBrush(Colors.White);
+            (sender as Button).BorderThickness = new Thickness(1, 1, 1, 0);
         }
     }
 }

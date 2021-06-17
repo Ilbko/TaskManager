@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TaskManager"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="450" Width="450">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition></ColumnDefinition>
@@ -14,6 +14,7 @@
             <RowDefinition Height="auto"></RowDefinition>
             <RowDefinition Height="auto"></RowDefinition>
             <RowDefinition></RowDefinition>
+            <RowDefinition Height="auto"></RowDefinition>
         </Grid.RowDefinitions>
         <Menu Grid.Row="0" Grid.Column="0" Background="White">
             <MenuItem Header="Файл">
@@ -31,20 +32,22 @@
                 </MenuItem>
             </MenuItem>
         </Menu>
-        <DockPanel Grid.Row="1" Grid.Column="0" Height="20" Margin="3" LastChildFill="False">
+        <DockPanel Name="ButtonsDockPanel" Grid.Row="1" Grid.Column="0" Height="20" Margin="3" LastChildFill="False">
             <DockPanel.Resources>
                 <Style TargetType="Button">
                     <Setter Property="DockPanel.Dock" Value="Left"></Setter>
                     <Setter Property="BorderBrush" Value="Gray"></Setter>
-                    <Setter Property="Margin" Value="-1"></Setter>
+                    <Setter Property="Margin" Value="1,0,1,-2"></Setter>
                     <Setter Property="Padding" Value="5,0,5,0"></Setter>
                 </Style>
             </DockPanel.Resources>
 
-            <Button Background="White" BorderThickness="1,1,1,0">Процессы</Button>
-            <Button>Автозагрузка</Button>
+            <Button Background="White" BorderThickness="1,1,1,0" Click="Button_Click" Command="{Binding ButtonCommand}" CommandParameter="processes">Процессы</Button>
+            <Button Click="Button_Click" Command="{Binding ButtonCommand}" CommandParameter="autorun">Автозагрузка</Button>
         </DockPanel>
 
         <ListView x:Name="TaskListView" Grid.Row="2" Grid.Column="0"></ListView>
+
+        <Button Name="TaskButton" Grid.Column="0" Grid.Row="3" HorizontalAlignment="Right" Width="100" Height="20" Margin="10" IsEnabled="False">Снять задачу</Button>
     </Grid>
 </Window>
