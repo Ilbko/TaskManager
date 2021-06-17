@@ -7,6 +7,44 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-        
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"></RowDefinition>
+            <RowDefinition Height="auto"></RowDefinition>
+            <RowDefinition></RowDefinition>
+        </Grid.RowDefinitions>
+        <Menu Grid.Row="0" Grid.Column="0" Background="White">
+            <MenuItem Header="Файл">
+                <MenuItem Header="Запустить новую задачу"></MenuItem>
+                <MenuItem Header="Найти задачу"></MenuItem>
+                <MenuItem Header="Выход"></MenuItem>
+            </MenuItem>
+            <MenuItem Header="Вид">
+                <MenuItem Header="Обновить сейчас"></MenuItem>
+                <MenuItem Header="Скорость обновления">
+                    <MenuItem Header="Высокая"></MenuItem>
+                    <MenuItem Header="Обычная"></MenuItem>
+                    <MenuItem Header="Низкая"></MenuItem>
+                    <MenuItem Header="Приостановлено"></MenuItem>
+                </MenuItem>
+            </MenuItem>
+        </Menu>
+        <DockPanel Grid.Row="1" Grid.Column="0" Height="20" Margin="3" LastChildFill="False">
+            <DockPanel.Resources>
+                <Style TargetType="Button">
+                    <Setter Property="DockPanel.Dock" Value="Left"></Setter>
+                    <Setter Property="BorderBrush" Value="Gray"></Setter>
+                    <Setter Property="Margin" Value="-1"></Setter>
+                    <Setter Property="Padding" Value="5,0,5,0"></Setter>
+                </Style>
+            </DockPanel.Resources>
+
+            <Button Background="White" BorderThickness="1,1,1,0">Процессы</Button>
+            <Button>Автозагрузка</Button>
+        </DockPanel>
+
+        <ListView x:Name="TaskListView" Grid.Row="2" Grid.Column="0"></ListView>
     </Grid>
 </Window>
