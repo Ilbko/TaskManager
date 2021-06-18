@@ -13,7 +13,7 @@ namespace TaskManager
         public MainWindow()
         {
             InitializeComponent();
-            this.DataContext = new TaskViewModel(ref this.TaskListView);
+            this.DataContext = new TaskViewModel(ref this.TaskListView, ref this.TaskButton);
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -27,5 +27,7 @@ namespace TaskManager
             (sender as Button).Background = new SolidColorBrush(Colors.White);
             (sender as Button).BorderThickness = new Thickness(1, 1, 1, 0);
         }
+
+        private void MenuItem_Click(object sender, RoutedEventArgs e) => (sender as MenuItem).IsChecked = true;
     }
 }

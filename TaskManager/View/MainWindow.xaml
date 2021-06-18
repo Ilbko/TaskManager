@@ -3,9 +3,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:TaskManager"
+        xmlns:local="clr-namespace:TaskManager" 
+        xmlns:local1="clr-namespace:TaskManager.ViewModel"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="450">
+    <Window.Resources>
+        <local1:RefreshTimeConverter x:Key="myRefreshTimeConverter"></local1:RefreshTimeConverter>
+    </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition></ColumnDefinition>
@@ -25,10 +29,13 @@
             <MenuItem Header="Вид">
                 <MenuItem Header="Обновить сейчас"></MenuItem>
                 <MenuItem Header="Скорость обновления">
-                    <MenuItem Header="Высокая"></MenuItem>
-                    <MenuItem Header="Обычная"></MenuItem>
-                    <MenuItem Header="Низкая"></MenuItem>
-                    <MenuItem Header="Приостановлено"></MenuItem>
+                    <!--Поскольку при нажатии на MenuItem его значение IsChecked не изменяется (изменяется у RadioButton, к примеру),
+                    то нужно как-то просимулировать данное поведение (без него никак не вызвать обновление). Это сделано с помощью события, которое изменяет
+                    IsChecked и вызывает событие обновления у всех элементов, привязанных к RefreshTime.-->
+                    <MenuItem Header="Высокая" Click="MenuItem_Click" IsChecked="{Binding RefreshTime, Converter={StaticResource myRefreshTimeConverter}, ConverterParameter=1}"></MenuItem>
+                    <MenuItem Header="Обычная" Click="MenuItem_Click" IsChecked="{Binding RefreshTime, Converter={StaticResource myRefreshTimeConverter}, ConverterParameter=3}"></MenuItem>
+                    <MenuItem Header="Низкая" Click="MenuItem_Click" IsChecked="{Binding RefreshTime, Converter={StaticResource myRefreshTimeConverter}, ConverterParameter=5}"></MenuItem>
+                    <MenuItem Header="Приостановлено" Click="MenuItem_Click" IsChecked="{Binding RefreshTime, Converter={StaticResource myRefreshTimeConverter}, ConverterParameter=0}"></MenuItem>
                 </MenuItem>
             </MenuItem>
         </Menu>
@@ -48,6 +55,6 @@
 
         <ListView x:Name="TaskListView" Grid.Row="2" Grid.Column="0"></ListView>
 
-        <Button Name="TaskButton" Grid.Column="0" Grid.Row="3" HorizontalAlignment="Right" Width="100" Height="20" Margin="10" IsEnabled="False">Снять задачу</Button>
+        <Button Name="TaskButton" Grid.Column="0" Grid.Row="3" HorizontalAlignment="Right" Width="100" Height="20" Margin="10" IsEnabled="False" Command="{Binding KillCommand}">Снять задачу</Button>
     </Grid>
 </Window>

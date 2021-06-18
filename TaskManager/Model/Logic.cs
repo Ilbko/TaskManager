@@ -1,17 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows;
+using System.Windows.Media;
 using TaskManager.ViewModel;
-using TaskManager.Model.Base;
-using System.Management;
-using System.Drawing;
 
 namespace TaskManager.Model
 {
@@ -26,7 +21,7 @@ namespace TaskManager.Model
                 switch (act)
                 {
                     case "processes":
-                        {
+                        {                           
                             gridView.Columns.Add(new GridViewColumn
                             {
                                 Header = "Имя",
@@ -36,7 +31,7 @@ namespace TaskManager.Model
                             gridView.Columns.Add(new GridViewColumn
                             {
                                 Header = "ИД", 
-                                DisplayMemberBinding = new Binding("Id")
+                                DisplayMemberBinding = new Binding("Id"),
                             });
                             //gridView.Columns.Add(new GridViewColumn
                             //{
@@ -55,6 +50,7 @@ namespace TaskManager.Model
                                 DisplayMemberBinding = new Binding("StartTime")
                             });
 
+                            //Медленное решение
                             //gridView.Columns.Add(new GridViewColumn
                             //{
                             //    Header = "Имя",
@@ -94,15 +90,36 @@ namespace TaskManager.Model
             return false;
         }
 
-        internal static ObservableCollection<Process> GetProcesses()
+        internal static bool KillCommand(Process selectedProcess)
         {
-            ObservableCollection<Process> processes = new ObservableCollection<Process>(Process.GetProcesses().ToList().OrderBy(x => x.ProcessName));
-            foreach (Process item in processes)
+            try
+            {
+                selectedProcess.Kill();
+                return true;
+            } catch (System.ComponentModel.Win32Exception e) { MessageBox.Show(e.Message); return false; }
+        }
+        //internal static ObservableCollection<Process> GetProcesses()
+        //{
+        //    ObservableCollection<Process> processes = new ObservableCollection<Process>(Process.GetProcesses().ToList().OrderBy(x => x.ProcessName));
+        //    foreach (Process item in processes)
+        //    {
+        //        item.Refresh();
+        //    }
+
+        //    return processes;
+        //}
+        
+        //internal static ObservableCollection<Process> GetProcesses() => new ObservableCollection<Process>(Process.GetProcesses().ToList().OrderBy(x => x.ProcessName));
+        internal static void GetProcesses(ObservableCollection<Process> processes)
+        {
+            if (processes.Count != 0)
+                App.Current.Dispatcher.Invoke(() => processes.Clear());
+
+            foreach(var item in Process.GetProcesses().AsEnumerable().OrderBy(x => x.ProcessName))
             {
                 item.Refresh();
+                App.Current.Dispatcher.Invoke(() => processes.Add(item));
             }
-
-            return processes;
         }
 
         //Слишком медленно
@@ -145,5 +162,23 @@ namespace TaskManager.Model
 
         //    return winProcesses;
         //}
+
+        public static ScrollViewer GetScrollViewer(UIElement element)
+        {
+            if (element == null)
+                return null;
+
+            ScrollViewer scrollViewer = null;
+
+            for (int i = 0; i < App.Current.Dispatcher.Invoke(() => VisualTreeHelper.GetChildrenCount(element)) && scrollViewer == null; i++)
+            {
+                if (App.Current.Dispatcher.Invoke(() => VisualTreeHelper.GetChild(element, i) is ScrollViewer))
+                    scrollViewer = App.Current.Dispatcher.Invoke(() => (ScrollViewer)VisualTreeHelper.GetChild(element, i));
+                else
+                    scrollViewer = App.Current.Dispatcher.Invoke(() => GetScrollViewer(VisualTreeHelper.GetChild(element, i) as UIElement));
+            }
+
+            return scrollViewer;
+        }
     }
 }

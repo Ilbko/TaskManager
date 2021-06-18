@@ -107,6 +107,7 @@
     <Compile Include="Model\Base\WinProcess.cs" />
     <Compile Include="Model\Logic.cs" />
     <Compile Include="ViewModel\MemoryConverter.cs" />
+    <Compile Include="ViewModel\RefreshTimeConverter.cs" />
     <Compile Include="ViewModel\RelayCommand.cs" />
     <Page Include="View\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
