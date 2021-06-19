@@ -9,6 +9,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using TaskManager.Model;
+using TaskManager.Model.Base;
+using TaskManager.View;
 
 namespace TaskManager.ViewModel
 {
@@ -16,8 +18,12 @@ namespace TaskManager.ViewModel
     {
         private ListView listView;
         private ScrollViewer listViewScrollViewer;
+        private double scrollValue;
         private Button taskButton;
+        private Button autorunButton;
+
         public ObservableCollection<Process> processes { get; set; }
+        public ObservableCollection<WinAutorun> autoruns { get; set; } 
 
         private int pastProcessId;
         private Process selectedProcess;
@@ -27,13 +33,29 @@ namespace TaskManager.ViewModel
             set 
             { 
                 selectedProcess = value;
+                OnPropertyChanged("SelectedProcess");
                 try
                 {
                     taskButton.IsEnabled = selectedProcess != null ? true : false;
+                    autorunButton.IsEnabled = selectedProcess != null ? true : false;
                 } catch (System.InvalidOperationException e) { }
                 pastProcessId = selectedProcess != null ? selectedProcess.Id : pastProcessId;
             }
         }
+
+        private WinAutorun selectedAutorun;
+        public WinAutorun SelectedAutorun
+        {
+            get { return selectedAutorun; }
+            set 
+            { 
+                selectedAutorun = value; 
+                OnPropertyChanged("SelectedAutorun");
+
+                taskButton.IsEnabled = selectedAutorun != null ? true : false;
+            }
+        }
+
 
         //public ObservableCollection<WinProcess> winProcesses { get; set; }
 
@@ -64,7 +86,6 @@ namespace TaskManager.ViewModel
             }
         }
 
-
         private RelayCommand<string> buttonCommand;
         public RelayCommand<string> ButtonCommand
         {
@@ -84,15 +105,44 @@ namespace TaskManager.ViewModel
                                 {
                                     Logic.GetProcesses(this.processes);
                                     //this.processes = Logic.GetProcesses();
-                                    //OnPropertyChanged("processes");                                   
+                                    //OnPropertyChanged("processes");    
+                                    listView.SetBinding(ListView.ItemsSourceProperty, new Binding() { Source = this.processes });
+
+                                    BindingOperations.SetBinding(listView, ListView.SelectedItemProperty, new Binding()
+                                    {
+                                        Source = this,
+                                        Path = new PropertyPath("SelectedProcess"),
+                                        Mode = BindingMode.TwoWay,
+                                        UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
+                                    });
+
+                                    this.taskButton.Content = "Снять задачу";
+                                    this.taskButton.Tag = "processes";
+
+                                    this.autorunButton.Visibility = Visibility.Visible;
                                 }
-                                else
-                                    this.listView.ItemsSource = processes;
-                                //this.listView.ItemsSource = winProcesses;
                                 break;
                             }
                         case "autorun":
                             {
+                                if (Logic.ButtonClick(act, ref listView))
+                                {
+                                    Logic.GetAutoruns(this.autoruns);
+                                    listView.SetBinding(ListView.ItemsSourceProperty, new Binding() { Source = this.autoruns });
+
+                                    BindingOperations.SetBinding(listView, ListView.SelectedItemProperty, new Binding()
+                                    {
+                                        Source = this,
+                                        Path = new PropertyPath("SelectedAutorun"),
+                                        Mode = BindingMode.TwoWay,
+                                        UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
+                                    });
+
+                                    this.taskButton.Content = "Снять автозапуск";
+                                    this.taskButton.Tag = "autorun";
+
+                                    this.autorunButton.Visibility = Visibility.Hidden;
+                                }
                                 break;
                             }
                     }
@@ -108,11 +158,17 @@ namespace TaskManager.ViewModel
             get 
             {
                 return killCommand ?? new RelayCommand(() => 
-                { 
-                    if (Logic.KillCommand(selectedProcess))
-                        App.Current.Dispatcher.Invoke(() => Logic.GetProcesses(this.processes));
-                    //this.processes = Logic.GetProcesses();
-                    //OnPropertyChanged("processes");
+                {
+                    if (this.taskButton.Tag as string == "processes")
+                    {
+                        if (Logic.Kill(selectedProcess))
+                            Logic.GetProcesses(this.processes);
+                    }
+                    else if (this.taskButton.Tag as string == "autorun")
+                    {
+                        if (Logic.RemoveAutorun(selectedAutorun))
+                            Logic.GetAutoruns(this.autoruns);
+                    }
                 });
             }
         }
@@ -126,15 +182,50 @@ namespace TaskManager.ViewModel
             }
         }
 
+        private RelayCommand<MainWindow> closeCommand;
+        public RelayCommand<MainWindow> CloseCommand
+        {
+            get
+            {
+                return closeCommand ?? new RelayCommand<MainWindow>(act => act.Close());
+            }
+        }
+
+        private RelayCommand startCommand;
+        public RelayCommand StartCommand
+        {
+            get
+            {
+                return startCommand ?? new RelayCommand(() => 
+                {
+                    new TaskStartWindow().ShowDialog();
+                    Logic.GetProcesses(this.processes);
+                });
+            }
+        }
+
+        private RelayCommand autorunCommand;
+        public RelayCommand AutorunCommand
+        {
+            get
+            {
+                return autorunCommand ?? new RelayCommand(() => Logic.AddAutorun(selectedProcess));
+            }
+        }
+
 
         public event PropertyChangedEventHandler PropertyChanged;
         public void OnPropertyChanged([CallerMemberName] string prop = "")
             => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
-        public TaskViewModel(ref ListView listView, ref Button taskButton)
+        public TaskViewModel(ref ListView listView, ref Button taskButton, ref Button autorunButton)
         {
             this.listView = listView;
             this.taskButton = taskButton;
+            this.autorunButton = autorunButton;
+
+            this.taskButton.Tag = "processes";
             this.processes = new ObservableCollection<Process>();
+            this.autoruns = new ObservableCollection<WinAutorun>();
 
             Logic.GetProcesses(this.processes);
             //this.processes = Logic.GetProcesses();     
@@ -163,16 +254,16 @@ namespace TaskManager.ViewModel
             //refreshTimer.Interval = refreshTime * 1000;
             //refreshTimer.Start();
 
-            this.RefreshTime = 0;
+            this.RefreshTime = 5;
         }
 
         private void RefreshTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            listViewScrollViewer = Logic.GetScrollViewer(this.listView);
-            double scrollValue = listViewScrollViewer.VerticalOffset;
+            this.listViewScrollViewer = Logic.GetScrollViewer(this.listView);
+            this.scrollValue = listViewScrollViewer.VerticalOffset;
 
             Logic.GetProcesses(this.processes);
-            App.Current.Dispatcher.Invoke(() => listViewScrollViewer.ScrollToVerticalOffset(scrollValue));
+            App.Current.Dispatcher.Invoke(() => listViewScrollViewer.ScrollToVerticalOffset(this.scrollValue));
 
             Process currentProcess = this.processes.SingleOrDefault(x => x.Id == this.pastProcessId);
             //App.Current.Dispatcher.Invoke(() => this.listView.ScrollIntoView(currentProcess));

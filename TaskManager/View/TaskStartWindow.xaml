@@ -1,0 +1,43 @@
+﻿<Window x:Class="TaskManager.View.TaskStartWindow"
+        x:Name="StartWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TaskManager.View"
+        mc:Ignorable="d"
+        Title="TaskStartWindow" Height="210" Width="460" ResizeMode="NoResize" FontFamily="Calibri">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="auto"></ColumnDefinition>
+            <ColumnDefinition></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition></RowDefinition>
+            <RowDefinition></RowDefinition>
+            <RowDefinition Height="auto"></RowDefinition>
+            <RowDefinition></RowDefinition>
+        </Grid.RowDefinitions>
+
+        <Image Grid.Row="0" Grid.Column="0" Margin="10,14,10,6" Source="/Resources/Comp.png"></Image>
+        <Label Grid.Row="0" Grid.Column="1" Margin="10,10,10,0" Content="Введите имя программы, папки, документа или ресурса&#x0d;&#x0a;Интернета, и Windows откроет их."></Label>
+
+        <Label Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="5,0,0,0">Открыть:</Label>
+        <TextBox Grid.Row="1" Grid.Column="1" Margin="15" Text="{Binding TaskName}"></TextBox>
+
+        <CheckBox Grid.Row="2" Grid.Column="1" Margin="15,0,10,10" IsChecked="{Binding IsAdmin}">Создать задачу с правами администратора.</CheckBox>
+
+        <DockPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Background="WhiteSmoke" LastChildFill="False">
+            <DockPanel.Resources>
+                <Style TargetType="Button">
+                    <Setter Property="Margin" Value="0,15,15,15"></Setter>
+                    <Setter Property="Width" Value="75"></Setter>
+                    <Setter Property="DockPanel.Dock" Value="Right"></Setter>
+                 </Style>
+            </DockPanel.Resources>
+            <Button Command="{Binding ViewCommand}">Обзор...</Button>
+            <Button Command="{Binding CancelCommand}" CommandParameter="{Binding ElementName=StartWindow}">Отмена</Button>
+            <Button Command="{Binding StartCommand}" CommandParameter="{Binding ElementName=StartWindow}">ОК</Button>
+        </DockPanel>
+    </Grid>
+</Window>

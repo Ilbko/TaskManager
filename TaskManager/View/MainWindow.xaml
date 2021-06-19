@@ -1,12 +1,14 @@
 ﻿<Window x:Class="TaskManager.MainWindow"
+        x:Name="Window"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TaskManager" 
-        xmlns:local1="clr-namespace:TaskManager.ViewModel"
+        xmlns:local1="clr-namespace:TaskManager.ViewModel" xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity" xmlns:command="http://www.galasoft.ch/mvvmlight"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="450">
+        Title="MainWindow" Height="450" Width="450" FontFamily="Calibri">
+        <!--Имя окна нужно для передачи окна в качестве параметра команды-->
     <Window.Resources>
         <local1:RefreshTimeConverter x:Key="myRefreshTimeConverter"></local1:RefreshTimeConverter>
     </Window.Resources>
@@ -22,20 +24,20 @@
         </Grid.RowDefinitions>
         <Menu Grid.Row="0" Grid.Column="0" Background="White">
             <MenuItem Header="Файл">
-                <MenuItem Header="Запустить новую задачу"></MenuItem>
+                <MenuItem Header="Запустить новую задачу" Command="{Binding StartCommand}"></MenuItem>
                 <MenuItem Header="Найти задачу"></MenuItem>
-                <MenuItem Header="Выход"></MenuItem>
+                <MenuItem Header="Выход" Command="{Binding CloseCommand}" CommandParameter="{Binding ElementName=Window}"></MenuItem>
             </MenuItem>
             <MenuItem Header="Вид">
-                <MenuItem Header="Обновить сейчас"></MenuItem>
+                <MenuItem Header="Обновить сейчас" Command="{Binding UpdateCommand}"></MenuItem>
                 <MenuItem Header="Скорость обновления">
                     <!--Поскольку при нажатии на MenuItem его значение IsChecked не изменяется (изменяется у RadioButton, к примеру),
                     то нужно как-то просимулировать данное поведение (без него никак не вызвать обновление). Это сделано с помощью события, которое изменяет
                     IsChecked и вызывает событие обновления у всех элементов, привязанных к RefreshTime.-->
-                    <MenuItem Header="Высокая" Click="MenuItem_Click" IsChecked="{Binding RefreshTime, Converter={StaticResource myRefreshTimeConverter}, ConverterParameter=1}"></MenuItem>
-                    <MenuItem Header="Обычная" Click="MenuItem_Click" IsChecked="{Binding RefreshTime, Converter={StaticResource myRefreshTimeConverter}, ConverterParameter=3}"></MenuItem>
-                    <MenuItem Header="Низкая" Click="MenuItem_Click" IsChecked="{Binding RefreshTime, Converter={StaticResource myRefreshTimeConverter}, ConverterParameter=5}"></MenuItem>
-                    <MenuItem Header="Приостановлено" Click="MenuItem_Click" IsChecked="{Binding RefreshTime, Converter={StaticResource myRefreshTimeConverter}, ConverterParameter=0}"></MenuItem>
+                    <MenuItem Header="Высокая" Click="MenuItemTimer_Click" IsChecked="{Binding RefreshTime, Converter={StaticResource myRefreshTimeConverter}, ConverterParameter=1}"></MenuItem>
+                    <MenuItem Header="Обычная" Click="MenuItemTimer_Click" IsChecked="{Binding RefreshTime, Converter={StaticResource myRefreshTimeConverter}, ConverterParameter=3}"></MenuItem>
+                    <MenuItem Header="Низкая" Click="MenuItemTimer_Click" IsChecked="{Binding RefreshTime, Converter={StaticResource myRefreshTimeConverter}, ConverterParameter=5}"></MenuItem>
+                    <MenuItem Header="Приостановлено" Click="MenuItemTimer_Click" IsChecked="{Binding RefreshTime, Converter={StaticResource myRefreshTimeConverter}, ConverterParameter=0}"></MenuItem>
                 </MenuItem>
             </MenuItem>
         </Menu>
@@ -55,6 +57,18 @@
 
         <ListView x:Name="TaskListView" Grid.Row="2" Grid.Column="0"></ListView>
 
-        <Button Name="TaskButton" Grid.Column="0" Grid.Row="3" HorizontalAlignment="Right" Width="100" Height="20" Margin="10" IsEnabled="False" Command="{Binding KillCommand}">Снять задачу</Button>
+        <DockPanel Grid.Column="0" Grid.Row="3" LastChildFill="False">
+            <DockPanel.Resources>
+                <Style TargetType="Button">
+                    <Setter Property="Width" Value="100"></Setter>
+                    <Setter Property="Height" Value="20"></Setter>
+                    <Setter Property="Margin" Value="10,10,10,10"></Setter>
+                    <Setter Property="IsEnabled" Value="False"></Setter>
+                    <Setter Property="DockPanel.Dock" Value="Right"></Setter>
+                </Style>
+            </DockPanel.Resources>
+            <Button Name="TaskButton" Command="{Binding KillCommand}">Снять задачу</Button>
+            <Button Name="AutorunButton" Command="{Binding AutorunCommand}">Добавить в автоз.</Button>
+        </DockPanel>
     </Grid>
 </Window>

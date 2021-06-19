@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
@@ -6,12 +7,14 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
+using TaskManager.Model.Base;
 using TaskManager.ViewModel;
 
 namespace TaskManager.Model
 {
     public static class Logic
     {
+        private static RegistryKey currentRegistry;
         private static string currentChoice = string.Empty;
         internal static bool ButtonClick(string act, ref ListView listView)
         {
@@ -77,6 +80,16 @@ namespace TaskManager.Model
                         }
                     case "autorun":
                         {
+                            gridView.Columns.Add(new GridViewColumn()
+                            {
+                                Header = "Имя",
+                                DisplayMemberBinding = new Binding("Name")
+                            });
+                            gridView.Columns.Add(new GridViewColumn() 
+                            {
+                                Header = "Путь и аттрибуты",
+                                DisplayMemberBinding = new Binding("Value")
+                            });
                             break;
                         }
 
@@ -90,14 +103,87 @@ namespace TaskManager.Model
             return false;
         }
 
-        internal static bool KillCommand(Process selectedProcess)
+        internal static void GetAutoruns(ObservableCollection<WinAutorun> autoruns)
+        {
+            if (autoruns.Count != 0)
+                autoruns.Clear();
+
+            currentRegistry = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run");
+
+            foreach (var item in currentRegistry.GetValueNames())
+            {
+                autoruns.Add(new WinAutorun() { Name = item, Value = currentRegistry.GetValue(item).ToString() });
+            }
+
+            currentRegistry.Close();
+        }
+        internal static void FileDialogTask(ref string taskName)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog()
+            {
+                Filter = "Программы (*.exe;*.pif;*.com;*.bat;*.cmd | *.exe; *.pif; *.com; *.bat; *.cmd;"
+            };
+
+            if (openFileDialog.ShowDialog() == true) 
+                taskName = openFileDialog.FileName;
+        }
+
+        internal static void StartTask(string taskName, bool isAdmin)
+        {
+            try
+            {
+                if (isAdmin)
+                    Process.Start(new ProcessStartInfo(taskName)
+                    {
+                        Verb = "runas",
+                        UseShellExecute = true
+                    });
+                else
+                    Process.Start(new ProcessStartInfo(taskName));
+
+            } catch (System.ComponentModel.Win32Exception e)
+            {
+                MessageBox.Show($"Не удаётся найти \"{taskName}\". Проверьте, правильно ли указано имя и повторите попытку.",
+                                taskName, MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        internal static bool Kill(Process selectedProcess)
         {
             try
             {
                 selectedProcess.Kill();
+
                 return true;
-            } catch (System.ComponentModel.Win32Exception e) { MessageBox.Show(e.Message); return false; }
+            } catch (System.Exception e) 
+            {
+                MessageBox.Show(e.Message, "Исключение", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                return false; 
+            }
         }
+
+        internal static bool RemoveAutorun(WinAutorun selectedAutorun)
+        {
+            currentRegistry = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
+
+            try
+            {
+                currentRegistry.DeleteValue(selectedAutorun.Name);
+                
+                currentRegistry.Close();
+
+                return true;
+            } catch (System.Exception e)
+            {
+                MessageBox.Show(e.Message, "Исключение", MessageBoxButton.OK, MessageBoxImage.Error);
+                
+                currentRegistry.Close();
+
+                return false;
+            }
+        }
+
         //internal static ObservableCollection<Process> GetProcesses()
         //{
         //    ObservableCollection<Process> processes = new ObservableCollection<Process>(Process.GetProcesses().ToList().OrderBy(x => x.ProcessName));
@@ -108,7 +194,7 @@ namespace TaskManager.Model
 
         //    return processes;
         //}
-        
+
         //internal static ObservableCollection<Process> GetProcesses() => new ObservableCollection<Process>(Process.GetProcesses().ToList().OrderBy(x => x.ProcessName));
         internal static void GetProcesses(ObservableCollection<Process> processes)
         {
@@ -119,6 +205,24 @@ namespace TaskManager.Model
             {
                 item.Refresh();
                 App.Current.Dispatcher.Invoke(() => processes.Add(item));
+            }
+        }
+
+        internal static void AddAutorun(Process selectedProcess)
+        {
+            currentRegistry = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
+
+            try
+            {
+                currentRegistry.SetValue(selectedProcess.ProcessName, selectedProcess.MainModule.FileName);
+                MessageBox.Show("Процесс успешно добавлен в автозагрузку.", "Автозагрузка", MessageBoxButton.OK, MessageBoxImage.Information);
+                
+                currentRegistry.Close();
+            } catch (System.Exception e)
+            {
+                MessageBox.Show(e.Message, "Исключение", MessageBoxButton.OK, MessageBoxImage.Error);
+                
+                currentRegistry.Close();
             }
         }
 

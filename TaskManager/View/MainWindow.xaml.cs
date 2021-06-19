@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using TaskManager.Model;
 using TaskManager.ViewModel;
 
 namespace TaskManager
@@ -10,10 +11,11 @@ namespace TaskManager
     /// </summary>
     public partial class MainWindow : Window
     {
+        private TaskViewModel taskViewModel;
         public MainWindow()
         {
             InitializeComponent();
-            this.DataContext = new TaskViewModel(ref this.TaskListView, ref this.TaskButton);
+            this.DataContext = taskViewModel = new TaskViewModel(ref this.TaskListView, ref this.TaskButton, ref this.AutorunButton);
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -28,6 +30,7 @@ namespace TaskManager
             (sender as Button).BorderThickness = new Thickness(1, 1, 1, 0);
         }
 
-        private void MenuItem_Click(object sender, RoutedEventArgs e) => (sender as MenuItem).IsChecked = true;
+        private void MenuItemTimer_Click(object sender, RoutedEventArgs e) => (sender as MenuItem).IsChecked = true;
+        private void MenuItemUpdate_Click(object sender, RoutedEventArgs e) => Logic.GetProcesses(taskViewModel.processes);
     }
 }
