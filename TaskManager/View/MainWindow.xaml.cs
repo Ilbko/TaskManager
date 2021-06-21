@@ -20,10 +20,13 @@ namespace TaskManager
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            foreach (Button button in this.ButtonsDockPanel.Children)
+            foreach (var button in this.ButtonsDockPanel.Children)
             {
-                button.Background = new SolidColorBrush(SystemColors.ControlColor);
-                button.BorderThickness = new Thickness(1);
+                if (button is Button)
+                {
+                    (button as Button).Background = new SolidColorBrush(SystemColors.ControlColor);
+                    (button as Button).BorderThickness = new Thickness(1);
+                }
             }
 
             (sender as Button).Background = new SolidColorBrush(Colors.White);

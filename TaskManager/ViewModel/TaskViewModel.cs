@@ -22,6 +22,24 @@ namespace TaskManager.ViewModel
         private Button taskButton;
         private Button autorunButton;
 
+        private PerformanceCounter cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+        
+        private string cpuString;
+        public string CPUString
+        {
+            get { return cpuString; }
+            set { cpuString = value; OnPropertyChanged("CPUString"); }
+        }
+
+        private PerformanceCounter ramCounter = new PerformanceCounter("Memory", "Available MBytes");
+        
+        private string ramString;
+        public string RAMString
+        {
+            get { return ramString; }
+            set { ramString = value; OnPropertyChanged("RAMString"); }
+        }
+
         public ObservableCollection<Process> processes { get; set; }
         public ObservableCollection<WinAutorun> autoruns { get; set; } 
 
@@ -93,61 +111,114 @@ namespace TaskManager.ViewModel
             {
                 //return buttonCommand ?? new RelayCommand<string>(act 
                 //    => Logic.ButtonClick(act, ref listView));
-                return buttonCommand ?? new RelayCommand<string>(act =>
-                {
-                    string button = act;
+                return buttonCommand ?? new RelayCommand<string>(act => this.ChangeListView(act));
+                //{
+                //    string button = act;
 
-                    switch (button)
+                //    switch (button)
+                //    {
+                //        case "processes":
+                //            {
+                //                if (Logic.ButtonClick(act, ref listView))
+                //                {
+                //                    Logic.GetProcesses(this.processes);
+                //                    listView.SetBinding(ListView.ItemsSourceProperty, new Binding() { Source = this.processes });
+
+                //                    BindingOperations.SetBinding(listView, ListView.SelectedItemProperty, new Binding()
+                //                    {
+                //                        Source = this,
+                //                        Path = new PropertyPath("SelectedProcess"),
+                //                        Mode = BindingMode.TwoWay,
+                //                        UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
+                //                    });
+
+                //                    this.taskButton.Content = "Снять задачу";
+                //                    this.taskButton.Tag = "processes";
+
+                //                    this.autorunButton.Visibility = Visibility.Visible;
+                //                    this.refreshTimer.Start();
+                //                }
+                //                break;
+                //            }
+                //        case "autorun":
+                //            {
+                //                if (Logic.ButtonClick(act, ref listView))
+                //                {
+                //                    Logic.GetAutoruns(this.autoruns);
+                //                    listView.SetBinding(ListView.ItemsSourceProperty, new Binding() { Source = this.autoruns });
+
+                //                    BindingOperations.SetBinding(listView, ListView.SelectedItemProperty, new Binding()
+                //                    {
+                //                        Source = this,
+                //                        Path = new PropertyPath("SelectedAutorun"),
+                //                        Mode = BindingMode.TwoWay,
+                //                        UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
+                //                    });
+
+                //                    this.taskButton.Content = "Снять автозапуск";
+                //                    this.taskButton.Tag = "autorun";
+
+                //                    this.autorunButton.Visibility = Visibility.Hidden;
+                //                    this.refreshTimer.Stop();
+                //                }
+                //                break;
+                //            }
+                //    }
+                //});
+
+            }
+        }
+
+        private void ChangeListView(string act)
+        {
+            switch (act)
+            {
+                case "processes":
                     {
-                        case "processes":
+                        if (Logic.ButtonClick(act, ref listView))
+                        {
+                            Logic.GetProcesses(this.processes);
+                            listView.SetBinding(ListView.ItemsSourceProperty, new Binding() { Source = this.processes });
+
+                            BindingOperations.SetBinding(listView, ListView.SelectedItemProperty, new Binding()
                             {
-                                if (Logic.ButtonClick(act, ref listView))
-                                {
-                                    Logic.GetProcesses(this.processes);
-                                    //this.processes = Logic.GetProcesses();
-                                    //OnPropertyChanged("processes");    
-                                    listView.SetBinding(ListView.ItemsSourceProperty, new Binding() { Source = this.processes });
+                                Source = this,
+                                Path = new PropertyPath("SelectedProcess"),
+                                Mode = BindingMode.TwoWay,
+                                UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
+                            });
 
-                                    BindingOperations.SetBinding(listView, ListView.SelectedItemProperty, new Binding()
-                                    {
-                                        Source = this,
-                                        Path = new PropertyPath("SelectedProcess"),
-                                        Mode = BindingMode.TwoWay,
-                                        UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
-                                    });
+                            this.taskButton.Content = "Снять задачу";
+                            this.taskButton.Tag = "processes";
 
-                                    this.taskButton.Content = "Снять задачу";
-                                    this.taskButton.Tag = "processes";
-
-                                    this.autorunButton.Visibility = Visibility.Visible;
-                                }
-                                break;
-                            }
-                        case "autorun":
-                            {
-                                if (Logic.ButtonClick(act, ref listView))
-                                {
-                                    Logic.GetAutoruns(this.autoruns);
-                                    listView.SetBinding(ListView.ItemsSourceProperty, new Binding() { Source = this.autoruns });
-
-                                    BindingOperations.SetBinding(listView, ListView.SelectedItemProperty, new Binding()
-                                    {
-                                        Source = this,
-                                        Path = new PropertyPath("SelectedAutorun"),
-                                        Mode = BindingMode.TwoWay,
-                                        UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
-                                    });
-
-                                    this.taskButton.Content = "Снять автозапуск";
-                                    this.taskButton.Tag = "autorun";
-
-                                    this.autorunButton.Visibility = Visibility.Hidden;
-                                }
-                                break;
-                            }
+                            this.autorunButton.Visibility = Visibility.Visible;
+                            this.refreshTimer.Start();
+                        }
+                        break;
                     }
-                });
+                case "autorun":
+                    {
+                        if (Logic.ButtonClick(act, ref listView))
+                        {
+                            Logic.GetAutoruns(this.autoruns);
+                            listView.SetBinding(ListView.ItemsSourceProperty, new Binding() { Source = this.autoruns });
 
+                            BindingOperations.SetBinding(listView, ListView.SelectedItemProperty, new Binding()
+                            {
+                                Source = this,
+                                Path = new PropertyPath("SelectedAutorun"),
+                                Mode = BindingMode.TwoWay,
+                                UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
+                            });
+
+                            this.taskButton.Content = "Снять автозапуск";
+                            this.taskButton.Tag = "autorun";
+
+                            this.autorunButton.Visibility = Visibility.Hidden;
+                            this.refreshTimer.Stop();
+                        }
+                        break;
+                    }
             }
         }
 
@@ -178,7 +249,12 @@ namespace TaskManager.ViewModel
         {
             get
             {
-                return updateCommand ?? new RelayCommand(() => Logic.GetProcesses(this.processes));
+                return updateCommand ?? new RelayCommand(() => 
+                {
+                    Logic.GetProcesses(this.processes);
+                    this.UpdatePerfCounters();
+                });
+
             }
         }
 
@@ -213,6 +289,12 @@ namespace TaskManager.ViewModel
             }
         }
 
+        private void UpdatePerfCounters()
+        {
+            this.CPUString = "CPU: " + this.cpuCounter.NextValue() + "%";
+            this.RAMString = "RAM: " + this.ramCounter.NextValue() + " MB";
+        }
+
 
         public event PropertyChangedEventHandler PropertyChanged;
         public void OnPropertyChanged([CallerMemberName] string prop = "")
@@ -223,38 +305,15 @@ namespace TaskManager.ViewModel
             this.taskButton = taskButton;
             this.autorunButton = autorunButton;
 
-            this.taskButton.Tag = "processes";
             this.processes = new ObservableCollection<Process>();
             this.autoruns = new ObservableCollection<WinAutorun>();
 
-            Logic.GetProcesses(this.processes);
-            //this.processes = Logic.GetProcesses();     
-            //this.winProcesses = Logic.GetProcesses();
-
-            Logic.ButtonClick("processes", ref listView);
-
-            BindingOperations.SetBinding(listView, ListView.SelectedItemProperty, new Binding()
-            {
-                Source = this,
-                Path = new PropertyPath("SelectedProcess"),
-                Mode = BindingMode.TwoWay, 
-                UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
-            });
-
-            //this.listView.ItemsSource = this.processes;
-            listView.SetBinding(ListView.ItemsSourceProperty, new Binding() { Source = this.processes });
-            //this.listView.ItemsSource = winProcesses;
-
-            //OnPropertyChanged("processes");
-            //OnPropertyChanged("winProcesses");
-
-            this.refreshTimer.Elapsed += RefreshTimer_Elapsed;
-
-            //Вместо этого можно просто изменить значение refreshTime. Его propfull установит интервал и запустит таймер
-            //refreshTimer.Interval = refreshTime * 1000;
-            //refreshTimer.Start();
+            this.ChangeListView("processes");
 
             this.RefreshTime = 5;
+
+            this.UpdatePerfCounters();
+            this.refreshTimer.Elapsed += RefreshTimer_Elapsed;
         }
 
         private void RefreshTimer_Elapsed(object sender, ElapsedEventArgs e)
@@ -268,6 +327,8 @@ namespace TaskManager.ViewModel
             Process currentProcess = this.processes.SingleOrDefault(x => x.Id == this.pastProcessId);
             //App.Current.Dispatcher.Invoke(() => this.listView.ScrollIntoView(currentProcess));
             App.Current.Dispatcher.Invoke(() => this.listView.SelectedItem = currentProcess);
+
+            this.UpdatePerfCounters();
         }
     }
 }

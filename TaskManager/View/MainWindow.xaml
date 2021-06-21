@@ -25,7 +25,6 @@
         <Menu Grid.Row="0" Grid.Column="0" Background="White">
             <MenuItem Header="Файл">
                 <MenuItem Header="Запустить новую задачу" Command="{Binding StartCommand}"></MenuItem>
-                <MenuItem Header="Найти задачу"></MenuItem>
                 <MenuItem Header="Выход" Command="{Binding CloseCommand}" CommandParameter="{Binding ElementName=Window}"></MenuItem>
             </MenuItem>
             <MenuItem Header="Вид">
@@ -33,7 +32,7 @@
                 <MenuItem Header="Скорость обновления">
                     <!--Поскольку при нажатии на MenuItem его значение IsChecked не изменяется (изменяется у RadioButton, к примеру),
                     то нужно как-то просимулировать данное поведение (без него никак не вызвать обновление). Это сделано с помощью события, которое изменяет
-                    IsChecked и вызывает событие обновления у всех элементов, привязанных к RefreshTime.-->
+                    IsChecked и вызывает событие обновления у всех элементов, привязанных к RefreshTime через свойство IsChecked.-->
                     <MenuItem Header="Высокая" Click="MenuItemTimer_Click" IsChecked="{Binding RefreshTime, Converter={StaticResource myRefreshTimeConverter}, ConverterParameter=1}"></MenuItem>
                     <MenuItem Header="Обычная" Click="MenuItemTimer_Click" IsChecked="{Binding RefreshTime, Converter={StaticResource myRefreshTimeConverter}, ConverterParameter=3}"></MenuItem>
                     <MenuItem Header="Низкая" Click="MenuItemTimer_Click" IsChecked="{Binding RefreshTime, Converter={StaticResource myRefreshTimeConverter}, ConverterParameter=5}"></MenuItem>
@@ -49,10 +48,20 @@
                     <Setter Property="Margin" Value="1,0,1,-2"></Setter>
                     <Setter Property="Padding" Value="5,0,5,0"></Setter>
                 </Style>
+                <Style TargetType="Label">
+                    <Setter Property="DockPanel.Dock" Value="Right"></Setter>
+                    <Setter Property="BorderBrush" Value="Gray"></Setter>
+                    <Setter Property="BorderThickness" Value="1"></Setter>
+                    <Setter Property="Margin" Value="1"></Setter>
+                    <Setter Property="Padding" Value="5,0,5,0"></Setter>
+                </Style>
             </DockPanel.Resources>
 
             <Button Background="White" BorderThickness="1,1,1,0" Click="Button_Click" Command="{Binding ButtonCommand}" CommandParameter="processes">Процессы</Button>
             <Button Click="Button_Click" Command="{Binding ButtonCommand}" CommandParameter="autorun">Автозагрузка</Button>
+
+            <Label Name="RAMLabel" Content="{Binding RAMString}"></Label>
+            <Label Name="CPULabel" Content="{Binding CPUString}"></Label>
         </DockPanel>
 
         <ListView x:Name="TaskListView" Grid.Row="2" Grid.Column="0"></ListView>
@@ -67,6 +76,7 @@
                     <Setter Property="DockPanel.Dock" Value="Right"></Setter>
                 </Style>
             </DockPanel.Resources>
+            
             <Button Name="TaskButton" Command="{Binding KillCommand}">Снять задачу</Button>
             <Button Name="AutorunButton" Command="{Binding AutorunCommand}">Добавить в автоз.</Button>
         </DockPanel>
