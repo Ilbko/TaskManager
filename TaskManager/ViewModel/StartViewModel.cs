@@ -6,14 +6,17 @@ using TaskManager.View;
 
 namespace TaskManager.ViewModel
 {
+    //ВьюМодель запуска новой задачи
     public class StartViewModel : INotifyPropertyChanged
     {
+        //Переменная, хранящая текст ТекстБокса
         private string taskName;
         public string TaskName
         {
             get { return taskName; }
             set { taskName = value; OnPropertyChanged("TaskName"); }
         }
+        //Переменная, отвечающая за ЧекБокс "Запуск от имени администратора"
         private bool isAdmin = false;
         public bool IsAdmin
         {
@@ -21,6 +24,8 @@ namespace TaskManager.ViewModel
             set { isAdmin = value; OnPropertyChanged("IsAdmin"); }
         }
 
+        #region Команды
+        //Команда нажатия на кнопку запуска задачи
         private RelayCommand<TaskStartWindow> startCommand;
         public RelayCommand<TaskStartWindow> StartCommand
         {
@@ -34,6 +39,7 @@ namespace TaskManager.ViewModel
             }
         }
 
+        //Команда нажатия на кнопку отмены
         private RelayCommand<TaskStartWindow> cancelCommand;
         public RelayCommand<TaskStartWindow> CancelCommand
         {
@@ -43,6 +49,7 @@ namespace TaskManager.ViewModel
             }
         }
 
+        //Команда нажатия на кнопку обзора файлов
         private RelayCommand viewCommand;
         public RelayCommand ViewCommand
         {
@@ -50,14 +57,13 @@ namespace TaskManager.ViewModel
             {
                 return viewCommand ?? new RelayCommand(() => 
                 {
+                    //По ссылке изменяется строка пути к файлу, чтобы после выбора файла был установлен его путь
                     Logic.FileDialogTask(ref taskName);
                     OnPropertyChanged("TaskName");
                 }); 
             }
         }
-
-
-
+        #endregion
 
         public event PropertyChangedEventHandler PropertyChanged;
         public void OnPropertyChanged([CallerMemberName] string prop = "")

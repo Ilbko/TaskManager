@@ -1,5 +1,4 @@
 ﻿using Microsoft.Win32;
-using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
@@ -14,17 +13,24 @@ namespace TaskManager.Model
 {
     public static class Logic
     {
+        //Объект класса работы с регистром и строка текущего выбора (просмотр задач или автозапусков)
         private static RegistryKey currentRegistry;
         private static string currentChoice = string.Empty;
+
+        //Метод нажатия на кнопку просмотра
         internal static bool ButtonClick(string act, ref ListView listView)
         {
+            //Если текущий выбор равняется переданному параметру, то значит, что кнопка просмотра была нажата дважды и нет смысла настраивать ЛистВью заново
             if (!(currentChoice == act))
             {
+                //ГридВью, который потом станет свойством ListView.View
                 GridView gridView = new GridView();
                 switch (act)
                 {
                     case "processes":
-                        {                           
+                        {
+                            //Добавление колонок с текстом сверху и привязке (Привязка происходит к полям типа данных наблюдаемой коллекции, к которому привязан ЛистВью)
+                            //(ItemsSource = ObservableCollection<*Process*>)
                             gridView.Columns.Add(new GridViewColumn
                             {
                                 Header = "Имя",
@@ -96,6 +102,7 @@ namespace TaskManager.Model
                 }
 
                 listView.View = gridView;
+                currentChoice = act;
                 return true;
             }
 
@@ -103,35 +110,27 @@ namespace TaskManager.Model
             return false;
         }
 
-        internal static void GetAutoruns(ObservableCollection<WinAutorun> autoruns)
-        {
-            if (autoruns.Count != 0)
-                autoruns.Clear();
-
-            currentRegistry = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run");
-
-            foreach (var item in currentRegistry.GetValueNames())
-            {
-                autoruns.Add(new WinAutorun() { Name = item, Value = currentRegistry.GetValue(item).ToString() });
-            }
-
-            currentRegistry.Close();
-        }
+        #region Методы окна запуска нового процесса
+        //Метод поиска программы для запуска в файловом диалоге
         internal static void FileDialogTask(ref string taskName)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog()
             {
+                //Название фильтра | значения фильтра
                 Filter = "Программы (*.exe;*.pif;*.com;*.bat;*.cmd | *.exe; *.pif; *.com; *.bat; *.cmd;"
             };
 
+            //Если был выбран файл
             if (openFileDialog.ShowDialog() == true) 
                 taskName = openFileDialog.FileName;
         }
 
+        //Метод запуска новой задачи
         internal static void StartTask(string taskName, bool isAdmin)
         {
             try
             {
+                //Запуск от имени админа
                 if (isAdmin)
                     Process.Start(new ProcessStartInfo(taskName)
                     {
@@ -147,7 +146,74 @@ namespace TaskManager.Model
                                 taskName, MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+        #endregion
 
+        #region Методы работы с автозапусками
+        //Метод добавления процесса в автозапуск
+        internal static void AddAutorun(Process selectedProcess)
+        {
+            //Открытие "папки" регистра с разрешением на редактирование (запись)
+            currentRegistry = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
+
+            try
+            {
+                //Добавление нового значения в виде имени процесса и его пути
+                currentRegistry.SetValue(selectedProcess.ProcessName, selectedProcess.MainModule.FileName);
+                MessageBox.Show("Процесс успешно добавлен в автозагрузку.", "Автозагрузка", MessageBoxButton.OK, MessageBoxImage.Information);               
+            } catch (System.Exception e)
+            {
+                MessageBox.Show(e.Message, "Исключение", MessageBoxButton.OK, MessageBoxImage.Error);              
+            }
+
+            currentRegistry.Close();
+        }
+
+        //Метод получения текущих автозапусков
+        internal static void GetAutoruns(ObservableCollection<WinAutorun> autoruns)
+        {
+            //Очищение прошлого списка
+            if (autoruns.Count != 0)
+                autoruns.Clear();
+
+            //Открытие "папки" регистра
+            currentRegistry = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run");
+
+            //Добавление в список имени и значения
+            foreach (var item in currentRegistry.GetValueNames())
+            {
+                autoruns.Add(new WinAutorun() { Name = item, Value = currentRegistry.GetValue(item).ToString() });
+            }
+
+            currentRegistry.Close();
+        }
+
+        //Метод удаления автозапуска
+        internal static bool RemoveAutorun(WinAutorun selectedAutorun)
+        {
+            //Открытие "папки" регистра с разрешением на редактирование (удаление)
+            currentRegistry = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
+
+            try
+            {
+                currentRegistry.DeleteValue(selectedAutorun.Name);
+
+                currentRegistry.Close();
+
+                return true;
+            }
+            catch (System.Exception e)
+            {
+                MessageBox.Show(e.Message, "Исключение", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                currentRegistry.Close();
+
+                return false;
+            }
+        }
+        #endregion
+
+        #region Методы работы с задачами
+        //Метод завершения процесса
         internal static bool Kill(Process selectedProcess)
         {
             try
@@ -155,74 +221,27 @@ namespace TaskManager.Model
                 selectedProcess.Kill();
 
                 return true;
-            } catch (System.Exception e) 
-            {
-                MessageBox.Show(e.Message, "Исключение", MessageBoxButton.OK, MessageBoxImage.Error);
-
-                return false; 
             }
-        }
-
-        internal static bool RemoveAutorun(WinAutorun selectedAutorun)
-        {
-            currentRegistry = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
-
-            try
-            {
-                currentRegistry.DeleteValue(selectedAutorun.Name);
-                
-                currentRegistry.Close();
-
-                return true;
-            } catch (System.Exception e)
+            catch (System.Exception e)
             {
                 MessageBox.Show(e.Message, "Исключение", MessageBoxButton.OK, MessageBoxImage.Error);
-                
-                currentRegistry.Close();
 
                 return false;
             }
         }
 
-        //internal static ObservableCollection<Process> GetProcesses()
-        //{
-        //    ObservableCollection<Process> processes = new ObservableCollection<Process>(Process.GetProcesses().ToList().OrderBy(x => x.ProcessName));
-        //    foreach (Process item in processes)
-        //    {
-        //        item.Refresh();
-        //    }
-
-        //    return processes;
-        //}
-
         //internal static ObservableCollection<Process> GetProcesses() => new ObservableCollection<Process>(Process.GetProcesses().ToList().OrderBy(x => x.ProcessName));
+
+        //Метод получения списка всех процессов
         internal static void GetProcesses(ObservableCollection<Process> processes)
         {
             if (processes.Count != 0)
                 App.Current.Dispatcher.Invoke(() => processes.Clear());
 
-            foreach(var item in Process.GetProcesses().AsEnumerable().OrderBy(x => x.ProcessName))
+            foreach (var item in Process.GetProcesses().AsEnumerable().OrderBy(x => x.ProcessName))
             {
                 item.Refresh();
                 App.Current.Dispatcher.Invoke(() => processes.Add(item));
-            }
-        }
-
-        internal static void AddAutorun(Process selectedProcess)
-        {
-            currentRegistry = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
-
-            try
-            {
-                currentRegistry.SetValue(selectedProcess.ProcessName, selectedProcess.MainModule.FileName);
-                MessageBox.Show("Процесс успешно добавлен в автозагрузку.", "Автозагрузка", MessageBoxButton.OK, MessageBoxImage.Information);
-                
-                currentRegistry.Close();
-            } catch (System.Exception e)
-            {
-                MessageBox.Show(e.Message, "Исключение", MessageBoxButton.OK, MessageBoxImage.Error);
-                
-                currentRegistry.Close();
             }
         }
 
@@ -266,7 +285,9 @@ namespace TaskManager.Model
 
         //    return winProcesses;
         //}
+        #endregion
 
+        //Метод получения СкроллВью
         public static ScrollViewer GetScrollViewer(UIElement element)
         {
             if (element == null)
@@ -274,11 +295,15 @@ namespace TaskManager.Model
 
             ScrollViewer scrollViewer = null;
 
+            //VisualTreeHelper - дерево всех визуальных частей UI-элемента
+            //Цикл выполняется, пока ещё остались части элемента или пока не был найден СкроллВью
             for (int i = 0; i < App.Current.Dispatcher.Invoke(() => VisualTreeHelper.GetChildrenCount(element)) && scrollViewer == null; i++)
             {
+                //Если найденный элемент - СкроллВью
                 if (App.Current.Dispatcher.Invoke(() => VisualTreeHelper.GetChild(element, i) is ScrollViewer))
                     scrollViewer = App.Current.Dispatcher.Invoke(() => (ScrollViewer)VisualTreeHelper.GetChild(element, i));
                 else
+                    //Углубление по дереву дальше
                     scrollViewer = App.Current.Dispatcher.Invoke(() => GetScrollViewer(VisualTreeHelper.GetChild(element, i) as UIElement));
             }
 
